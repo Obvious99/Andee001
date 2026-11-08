@@ -130,8 +130,11 @@ android {
         applicationId "net.kuafuai.andee"
         minSdk 30
         targetSdk 34
-        versionCode 25
-        versionName "0.12.1"
+        // Andee Mini (personal build): versionName carries the CI run number so each build is told apart;
+        // versionCode rises with it so a newer build always installs over an older one.
+        def miniRun = (System.getenv('GITHUB_RUN_NUMBER') ?: '0') as int
+        versionCode 2500 + miniRun
+        versionName "0.12.1-mini-" + miniRun
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
@@ -186,7 +189,22 @@ android {
         }
     }
 
+    // Andee Mini: one fixed key, committed on purpose (a personal side-load build, not a store
+    // release), so every CI build is signed the same way and installs over the previous one.
+    signingConfigs {
+        debug {
+            storeFile file('keystore/andee-mini.p12')
+            storePassword 'andeemini'
+            keyAlias 'andeemini'
+            keyPassword 'andeemini'
+            storeType 'pkcs12'
+        }
+    }
+
     buildTypes {
+        debug {
+            signingConfig signingConfigs.debug
+        }
         release {
             minifyEnabled true
             shrinkResources true

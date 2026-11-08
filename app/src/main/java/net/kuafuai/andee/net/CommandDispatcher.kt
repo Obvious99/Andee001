@@ -1886,6 +1886,10 @@ class CommandDispatcher(
     }
 
     private fun ensureCompact() {
+        // Andee Mini: the small chat popup is an Activity in front of the user's app. Put it away
+        // (and wait until it is gone) before anything reads or touches the screen; it comes back
+        // when the task's final answer arrives. See MiniChatActivity.
+        net.kuafuai.andee.ui.MiniChatActivity.stepAsideForTask()
         // The window, not the cache. [compacted] is written on the main thread
         // by everything that folds, but the card can be unfolded by paths that
         // never come back through here — birth, `ensureOverlays`, a card that
@@ -2063,6 +2067,7 @@ class CommandDispatcher(
             setBusy(false)
             window.signalOutcome(true)
         }
+        net.kuafuai.andee.ui.MiniChatActivity.taskOver(answered = true)
     }
 
     /**
@@ -2073,6 +2078,7 @@ class CommandDispatcher(
      */
     fun cancelTask() {
         ui.post { setBusy(false) }
+        net.kuafuai.andee.ui.MiniChatActivity.taskOver(answered = false)
     }
 
     /**

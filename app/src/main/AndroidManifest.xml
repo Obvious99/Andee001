@@ -248,6 +248,18 @@
              screen. Not noHistory: that finishes it the moment the camera or
              the photo picker opens, and their result would have nowhere to
              land. onStop does the same job and knows when not to. -->
+        <!-- Andee Mini: the small chat popup a double-tap on the ball opens. An Activity for the
+             same keyboard reason as TextInputActivity; translucent so the app behind stays visible. -->
+        <activity
+            android:name=".ui.MiniChatActivity"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar"
+            android:excludeFromRecents="true"
+            android:autoRemoveFromRecents="true"
+            android:taskAffinity=""
+            android:launchMode="singleTop"
+            android:windowSoftInputMode="adjustResize|stateVisible"
+            android:exported="false"
+            android:configChanges="orientation|screenSize|keyboardHidden" />
         <activity
             android:name=".ui.TextInputActivity"
             android:theme="@android:style/Theme.Translucent.NoTitleBar"

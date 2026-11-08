@@ -300,6 +300,17 @@ class BodyCoreService : Service() {
                 toggleTyping()
             }
 
+            // Andee Mini: double-tap = the small chat popup. Opening it is a new request, like the old
+            // double-tap was: whatever is running or being read out stops first.
+            override fun onMiniChatToggle() {
+                if (net.kuafuai.andee.ui.MiniChatActivity.isShowing) {
+                    net.kuafuai.andee.ui.MiniChatActivity.dismiss()
+                    return
+                }
+                if (dispatcher.isTaskActive() || audio.isStreamPlaying()) stopEverything()
+                openMiniChat()
+            }
+
             override fun onTypeThen(what: String) {
                 toggleTyping(then = what)
             }
@@ -653,6 +664,15 @@ class BodyCoreService : Service() {
         // rather than an overlay — an overlay window cannot raise the soft
         // keyboard on this ROM. See ui/TextInputActivity.
         net.kuafuai.andee.ui.TextInputActivity.onSubmit = { text, images -> submitUserTurn(text, "typed", images) }
+        // Andee Mini: the small chat popup. Same one way in for a typed turn.
+        net.kuafuai.andee.ui.MiniChatActivity.onSubmit = { text -> submitUserTurn(text, "typed") }
+        net.kuafuai.andee.ui.MiniChatActivity.onClosed = {
+            noteOwnActivity()
+            window.setAway(false)
+        }
+        net.kuafuai.andee.ui.MiniChatActivity.onExpand = { dispatcher.expand() }
+        net.kuafuai.andee.ui.MiniChatActivity.onReturn = { openMiniChat() }
+        net.kuafuai.andee.ui.MiniChatActivity.isTaskActive = { dispatcher.isTaskActive() }
         // The camera and the photo picker are other apps' windows, and the card
         // is an overlay that sorts above them — so it steps aside while they are up.
         net.kuafuai.andee.ui.TextInputActivity.onAway = { window.setAway(it) }
@@ -1224,6 +1244,26 @@ class BodyCoreService : Service() {
      * hidden card is whatever app the user was on, so typing looked like being
      * thrown out of the assistant and then dropped back in.
      */
+    /**
+     * Andee Mini: open the small chat popup. The card folds to the ball first (a full card is an
+     * overlay and would sit on top of the popup), and the ball steps aside while the popup is up so it
+     * cannot cover the send key; [MiniChatActivity.onClosed] puts it back. If the popup did not manage
+     * to open, the ball comes back on its own.
+     */
+    private fun openMiniChat() {
+        if (net.kuafuai.andee.ui.ImeSwitch.typable(this).isEmpty()) {
+            net.kuafuai.andee.ui.CardUi.error(AppLocale.str(this, R.string.svc_no_typable_ime))
+            return
+        }
+        if (!window.isCompact()) dispatcher.compactForUser()
+        window.setAway(true)
+        noteOwnActivity()
+        net.kuafuai.andee.ui.MiniChatActivity.start(this)
+        ui.postDelayed({
+            if (!net.kuafuai.andee.ui.MiniChatActivity.isAlive) window.setAway(false)
+        }, 2000)
+    }
+
     private fun toggleTyping(then: String? = null) {
         if (net.kuafuai.andee.ui.TextInputActivity.isShowing && then == null) {
             net.kuafuai.andee.ui.TextInputActivity.dismiss()
@@ -3354,7 +3394,9 @@ class BodyCoreService : Service() {
         val wait = net.kuafuai.andee.ui.NudgeUi.Gate.WAIT
         if (exitRequested || !window.isShown()) return wait
         if (net.kuafuai.andee.ui.CardUi.isCardUp() || audio.isStreamPlaying() || asr.isActive()) return wait
-        if (dispatcher.isTaskActive() || meeting.isActive() || net.kuafuai.andee.ui.TextInputActivity.isShowing) return wait
+        if (dispatcher.isTaskActive() || meeting.isActive() || net.kuafuai.andee.ui.TextInputActivity.isShowing ||
+            net.kuafuai.andee.ui.MiniChatActivity.isShowing
+        ) return wait
         val nm = getSystemService(android.app.NotificationManager::class.java)
         if (nm != null && nm.currentInterruptionFilter > android.app.NotificationManager.INTERRUPTION_FILTER_ALL) return wait
         return if (window.isCompact()) net.kuafuai.andee.ui.NudgeUi.Gate.SHOW else net.kuafuai.andee.ui.NudgeUi.Gate.LOG

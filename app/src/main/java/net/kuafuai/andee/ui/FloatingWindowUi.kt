@@ -242,6 +242,12 @@ class FloatingWindowUi(
          */
         fun onTextInputToggle()
 
+        /**
+         * Andee Mini: two taps on the ball open the small chat popup
+         * ([MiniChatActivity]) instead of the full card. Defaults to the old behaviour.
+         */
+        fun onMiniChatToggle() { onTextInputToggle() }
+
         /** The resting pill's camera / album icon: open the field and go straight on to [what]. */
         fun onTypeThen(what: String) {}
 
@@ -3459,7 +3465,8 @@ class FloatingWindowUi(
         private val tapRunnable = Runnable {
             when (tapCount) {
                 1 -> listeners.onTalkClick()
-                2 -> listeners.onTextInputToggle()
+                // Andee Mini: two taps open the small chat popup (see MiniChatActivity).
+                2 -> listeners.onMiniChatToggle()
             }
             tapCount = 0
         }

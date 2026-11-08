@@ -1,0 +1,9 @@
+Andee Mini
+This is a modified version of Andee (https://github.com/kuafuai/andee), v0.12.1,
+by kuafuai, licensed under the Apache License 2.0 (see LICENSE).
+
+Changes in this copy (2026-11-08):
+- Double-tap on the floating ball opens a small chat popup (MiniChatActivity)
+  instead of the full card. The popup hides itself while Andee reads or taps the
+  screen and comes back when the answer arrives.
+- A GitHub Actions workflow (mini-apk.yml) builds an arm64 APK signed with a fixed key.

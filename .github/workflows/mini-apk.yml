@@ -1,0 +1,37 @@
+# Andee Mini: builds the arm64 APK with the small chat popup.
+# Debug build type on purpose: it is the variant that allows plain http to localhost
+# (the user's local LLM server), signed with the fixed key in app/keystore so every
+# build installs over the previous one. JDK 17 for the same reason as build.yml.
+name: andee-mini-apk
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: gradle/actions/setup-gradle@v3
+
+      - run: chmod +x gradlew && ./gradlew --no-daemon :app:assembleDebug -PdefaultLang=en
+
+      - name: Name the APK
+        run: |
+          mkdir -p out
+          cp app/build/outputs/apk/debug/*arm64-v8a*.apk "out/Andee-0.12.1-mini-${{ github.run_number }}-arm64.apk"
+          ls -la out
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: andee-mini-arm64
+          path: out/*.apk
+          if-no-files-found: error
